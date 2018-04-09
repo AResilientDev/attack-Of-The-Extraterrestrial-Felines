@@ -19,6 +19,12 @@ var healthBar;
 var enemySound;
 var lasers;
 var spaceBar;
+var powerUpGroup;
+var powerUpActive = false;
+var messageText;
+var timeBar;
+var timeUp = false;
+var timeLimit = 100;
 
 // preload game assets - runs once at start
 function preload() {
@@ -42,6 +48,9 @@ function preload() {
   game.load.image('bar-outline', 'assets/images/bar-outline.png');
   game.load.audio('enemy-sound', 'assets/sounds/meow.wav');
   game.load.image('greenLaser', 'assets/images/laser-purple.png');
+  game.load.image('powerUp', 'assets/images/star.png');
+  game.load.image('bar-black', 'assets/images/bar-black.png');
+  game.load.image('bar-yellow', 'assets/images/bar-yellow.png')
 }
 
 // create game world - runs once after "preload" finished
@@ -64,18 +73,38 @@ function create() {
 
   // add ground platform
   var ground = platformGroup.create(0, game.world.height - 25, 'platform-500');
-  ground.scale.setTo(10, 1); // 10 * 500 = 5000 pixels wide
+  ground.scale.setTo(.5, 1); // 10 * 500 = 5000 pixels wide
 
   // add platforms
   platformGroup.create(200, 500, 'platform-100');
   platformGroup.create(400, 425, 'platform-100');
   platformGroup.create(600, 350, 'platform-100');
+  platformGroup.create(1500, 300, 'platform-100');
   platformGroup.create(50, 100, 'platform-50');
   platformGroup.create(250, 175, 'platform-50');
   platformGroup.create(450, 260, 'platform-50');
-  platformGroup.create(900, 275, 'platform-200');
   platformGroup.create(1150, 475, 'platform-50');
-  platformGroup.create(1350, 500, 'platform-50');
+  platformGroup.create(900, 275, 'platform-200');
+  platformGroup.create(1350, 400, 'platform-100');
+  platformGroup.create(1750, 300, 'platform-100');
+  platformGroup.create(2000, 375, 'platform-100');
+  platformGroup.create(2250, 320, 'platform-100');
+  platformGroup.create(2500, 300, 'platform-50');
+  platformGroup.create(2750, 340, 'platform-100');
+  platformGroup.create(3000, 380, 'platform-50');
+  platformGroup.create(3250, 420, 'platform-100');
+  platformGroup.create(3500, 440, 'platform-200');
+  platformGroup.create(3750, 475, 'platform-50');
+  platformGroup.create(4000, 500, 'platform-100');
+  platformGroup.create(4250, 450, 'platform-50');
+  platformGroup.create(4500, 400, 'platform-200');
+  platformGroup.create(4750, 375, 'platform-50');
+  platformGroup.create(5000, 475, 'platform-50');
+
+
+
+
+
   platformGroup.setAll('body.immovable', true);
 
   //WALLS
@@ -96,14 +125,16 @@ function create() {
 
   //coins POSITION
   var coinPosition = [
-    { x: 75, y: 0 }, { x: 150, y: 0 }, { x: 250, y: 250 },
-        { x: 275, y: 0 }, { x: 350, y: 0 }, { x: 450, y: 300 },
-        { x: 475, y: 0 }, { x: 537, y: 0 }, { x: 650, y: 0 },
+    { x: 75, y: 0 }, { x: 75, y: 0 }, { x: 200, y: 250 },
+        { x: 280, y: 0 }, { x: 400, y: 0 }, { x: 420, y: 300 },
+        { x: 480, y: 0 }, { x: 600, y: 300 }, { x: 680, y: 0 },
         { x: 700, y: 400 }, { x: 850, y: 0 }, { x: 950, y: 0 },
         { x: 1050, y: 0 }, { x: 1175, y: 0 }, { x: 1375, y: 0 },
         { x: 1575, y: 0 }, { x: 1750, y: 0 },  { x: 2000, y: 0 },
-        { x: 2250, y: 0 },  { x: 2500, y: 0 },  { x: 2775, y: 0 },
-        { x: 3000, y: 0 },
+        { x: 2250, y: 500 },  { x: 2500, y: 500},  { x: 2775, y: 500 },
+        { x: 3000, y: 370 }, { x: 3250, y: 410 }, { x: 3500, y: 440 },
+        { x: 3750, y: 440 }, { x: 4010, y: 480 }, { x: 4250, y: 460 },
+        { x: 4500, y: 480 }, { x: 4750, y: 480 }, { x: 4780, y: 480 }
     ];
 
   //add coins
@@ -116,24 +147,35 @@ function create() {
     coin.animations.play('spin');
   }
 
+  //add powerups
+  powerUpGroup = game.add.group();
+  powerUpGroup.enableBody = true;
+  var powerUp = powerUpGroup.create(1000, 400, 'powerUp');
+  var powerUp2 = powerUpGroup.create(3000, 370,  'powerUp');
+  powerUp.anchor.setTo(0.5, 0.5);
+  powerUp2.anchor.setTo(0.5, 0.5);
+
+
+
   //enemies
   enemyGroup = game.add.group();
   enemyGroup.enableBody = true;
   enemySound = game.add.audio('enemy-sound', 0.2);
 
-  for (var x = 0; x < 25; x++) {
-    var enemy = enemyGroup.create(x * 200 + 100, 0, 'enemy');
+  for (var x = 0; x < 10; x++) {
+    var enemy = enemyGroup.create(x * 500 + 280, -500, 'enemy');
     enemy.anchor.setTo(0.5, 0.5);
     enemy.body.gravity.y = 300;
     enemy.body.bounce.x = '.02';
+    enemy.scale.setTo(1.1, 1.1);
     enemy.body.collideWorldBounds = true;
     enemy.animations.add('left', [0, 1], 10, true);
     enemy.animations.add('right', [2, 3], 10, true);
-    enemy.body.setCircle(15, 5, 5);
-    enemy.body.velocity.x = Math.random() * 200;
+    enemy.body.setCircle(10, 5, 5);
+    enemy.body.velocity.x = Math.random() * 250 - 200;
 
     // gives the enemies a random velocity between 100-150
-    if (Math.random() <= 0.5) enemy.body.velocity.x *= -1;
+    if (Math.random() < 0.5) enemy.body.velocity.x *= -1;
 
     //gives the eneimes a 50% chance of changing their direction;
 
@@ -185,7 +227,7 @@ function create() {
   }
 
   //// score
-  scoreText = game.add.text(20, 20, 'Score: ' + score, { fontSize: '30px', fill: '#222222' });
+  scoreText = game.add.text(20, 20, 'Score: ' + score, { fontSize: '20px', fill: '#222222' });
   scoreText.fixedToCamera = true;
 
   //health text
@@ -200,7 +242,21 @@ function create() {
   barOutline = game.add.image(400, 20, 'bar-outline');
   barOutline.fixedToCamera = true;
 
+  //time
+  var timeText = game.add.text(720, 20, 'Time', {fontSize: '20px', fill: '#222222'})
+  timeText.fixedToCamera = true;
+  barBackground = game.add.image(780, 20, 'bar-black');
+  barBackground.fixedToCamera = true;
+  timeBar = game.add.image(780, 20, 'bar-yellow');
+  timeBar.fixedToCamera = true;
+  barOutline = game.add.image(780, 20, 'bar-outline');
+  barOutline.fixedToCamera = true;
+
   //distance markers temp
+  messageText = game.add.text(500,100, '', {fontsize: '54px', fill: '#fffea7'} );
+  messageText.anchor.setTo(0.5, 0.5);
+  messageText.fixedToCamera = true;
+  messageText.visible = false;
   game.add.text(1000, 300, '1000px', { fill: 'white' });
   game.add.text(2000, 300, '2000px', { fill: 'white' });
   game.add.text(3000, 300, '3000px', { fill: 'white' });
@@ -210,13 +266,16 @@ function create() {
 
 // update gameplay - runs in continuous loop after "create" finished
 function update() {
+  if (timeUp) gameOver();
+  else displayTimeLeft();
   game.physics.arcade.collide(player, platformGroup);
   game.physics.arcade.collide(player, wallGroup);
   game.physics.arcade.collide(coinGroup, platformGroup);
   game.physics.arcade.collide(coinGroup, wallGroup);
   game.physics.arcade.collide(player, coinGroup, collectCoin, null, this);
+  game.physics.arcade.collide(player, powerUpGroup, collectPowerUp);
   game.physics.arcade.collide(enemyGroup, platformGroup, patrolPlatform, null, this);
-  game.physics.arcade.collide(enemyGroup, wallGroup);
+  game.physics.arcade.collide(enemyGroup, wallGroup, reverseDirection, null, this);
   game.physics.arcade.overlap(player, enemyGroup, touchEnemy);
 
   // collide allows moving objects to transfer momentum so this
@@ -228,11 +287,15 @@ function update() {
   game.physics.arcade.collide(lasers, enemyGroup, laserHit, null, this);
 
   if (arrowKey.right.isDown) {
-    player.body.velocity.x = 200;
+    var runSpeed = 200;
+    if(powerUpActive) runSpeed = 300;
+    player.body.velocity.x = runSpeed;
     player.animations.play('right');
 
   }else if (arrowKey.left.isDown) {
-    player.body.velocity.x = -200;
+    var runSpeed = -200
+    if(powerUpActive) runSpeed = -300
+    player.body.velocity.x = runSpeed;
     player.animations.play('left');
   }else {
     player.body.velocity.x = 0;
@@ -241,9 +304,31 @@ function update() {
   }
 
   //jumping
-  if (arrowKey.up.justDown && player.body.touching.down) {
-    player.body.velocity.y = -300;
+if (powerUpActive === false){
+  if (arrowKey.up.justDown && player.body.touching.down){
+     var jumpHeight = -300;
+     if (powerUpActive) jumpHeight = -450;
+     player.body.velocity.y = jumpHeight;
+   }
+ }
+  else if (powerUpActive === true){
+   if (arrowKey.up.justDown && powerUpActive){
+      var jumpHeight = -300;
+      if (powerUpActive) jumpHeight = -450;
+      player.body.velocity.y = jumpHeight;
+    }
   }
+   // else if (arrowKey.up.justDown && player.body.touching.down && powerUpActive === false){
+   //   var jumpHeight = -300;
+   //   if (powerUpActive) jumpHeight = -450;
+   //   player.body.velocity.y = jumpHeight;
+   // }
+
+  // if (arrowKey.up.justDown && player.body.touching.down && powerUpActive === false) {
+  //   var jumpHeight = -300;
+  //   if (powerUpActive) jumpHeight = -450;
+  //   player.body.velocity.y = jumpHeight;
+  // }
 
   //fire lasers
   if (arrowKey.down.isDown) {
@@ -257,9 +342,9 @@ function update() {
 
 
   //BACKGROUND PARALLAX
-  sky.tilePosition.x = game.camera.x * -0.2;
+  sky.tilePosition.x = game.camera.x * -0.2; //furthest = slowest
   mountains.tilePosition.x = game.camera.x * -0.3;
-  city.tilePosition.x = game.camera.x * -0.4;
+  city.tilePosition.x = game.camera.x * -0.4;//closest = fastest
 
   // CHECK CAT ANIMATIONS
   //if the enemy's velocity is less than 0 this means it is moving left
@@ -270,10 +355,17 @@ function update() {
 
   });
 
- if (player.body.blocked.down === true){
-   player.kill();
+ if (powerUpActive === true){
+    player.body.blocked.down === false;
  }
-}
+   else if(player.body.blocked.down === true){
+        player.kill();
+   }
+ }
+ // if (player.body.touching.down){
+ //   player.kill();
+ // }
+
 
 // function playerHpDown(player, enemyGroup){
 //     if(player.health > 0){
@@ -284,13 +376,59 @@ function update() {
 // }
 
 // }
+function displayTimeLeft(){
+  var time = game.time.totalElapsedSeconds() /1;
+  var timeLeft = timeLimit - time;
+  // console.log(timeLeft);
+  // timeLimit = timeLeft;
+
+if(timeLeft <= 0) {
+    timeLeft = 0;
+    timeUp = true;
+    console.log(timeUp);
+  }
+  timeBar.scale.setTo(timeLeft / timeLimit, 1);
+}
 
 function collectCoin(player, coin) {
   coin.kill();
-  score += 50;
+  score += 150;
   scoreText.text = 'Score: ' + score;
+  checkWin();
 
   //for sounfx on coin pickup add play sound inside of colect coin function
+  //1250 points for 25 coins
+  //50 pts for coins 100 for enemies
+  //in order to win one must collect all of the coins and defeat atleast 20 enemies
+  //within the time limit
+}
+
+function checkWin (){
+  if(score >= 3900){
+    messageText.text = 'You proably cheated but... Good job you won!!';
+    messageText.fill = '#00ff00';
+    messageText.visible = true;
+    player.exists = false;
+  }
+}
+
+function collectPowerUp(player, powerUp){
+  powerUp.kill();
+  powerUpActive = true;
+  player.body.collideWorldBounds = true;
+  messageText.text = 'Power Boost';
+  messageText.fill = '#00ff00';
+  messageText.visible = true;
+  player.tint = 0x00ff00;
+  lasers.tint = 0x00ff00;
+  game.time.events.add(Phaser.Timer.SECOND * 10, stopPowerUp, this);
+
+}
+
+function stopPowerUp(){
+  powerUpActive = false;
+  messageText.visible = false;
+  player.tint = 0xFFFFFF;
 }
 
 function patrolPlatform(enemy, platform) {
@@ -304,7 +442,10 @@ function patrolPlatform(enemy, platform) {
   }
 
 }
+function reverseDirection(enemy, wall){
+enemy.body.velocity.x *= -1;
 
+}
 function touchEnemy(player, enemy) {
   enemy.body.velocity.x = Math.random() * 100 - 50;
 
@@ -315,8 +456,9 @@ function touchEnemy(player, enemy) {
   if (player.x < enemy.x) enemy.x += 30;
   else enemy.x -= 20;
   game.sound.play('enemy-sound');
-  player.damage(+5);
-  healthBar.width -= 10;
+  player.damage(+20);
+  healthBar.scale.setTo(player.health / player.maxHealth, 1);
+  // healthBar.width -= 10;
   console.log(player.health);
 
 }
@@ -327,7 +469,7 @@ function fireLaser() {
 
     // If we have a laser, set it to the starting position
 
-    laser.reset(player.x - 30, player.y);
+    laser.reset(player.x - 30, player.y + 10);
 
     // G  ive it a velocity of -500 so it starts shooting
 
@@ -340,7 +482,7 @@ function leftFireLaser() {
 
     // If we have a laser, set it to the starting position
 
-    laser.reset(player.x - 30, player.y);
+    laser.reset(player.x - 30, player.y + 10);
 
     // G  ive it a velocity of -500 so it starts shooting
 
@@ -355,7 +497,15 @@ function hitWall(laser, wall) {
 function laserHit(laser, enemy) {
   laser.kill();
   enemy.kill();
-  score += 100;
+  score += 150;
   scoreText.text = 'Score: ' + score;
 
+}
+
+function gameOver (){
+  messageText.text = "Times up thanks for playing & supporting a up & coming software developer - Developed by yours truly Emmanuel Casimir @AResilientDev ";
+  messageText.fill = '#ff0000'
+  messageText.fontSize = '15px'
+  messageText.visible = true;
+  player.exists = false;
 }
