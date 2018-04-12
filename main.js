@@ -24,7 +24,7 @@ var powerUpActive = false;
 var messageText;
 var timeBar;
 var timeUp = false;
-var timeLimit = 100;
+var timeLimit = 80;
 
 // preload game assets - runs once at start
 function preload() {
@@ -253,7 +253,7 @@ function create() {
   barOutline.fixedToCamera = true;
 
   //distance markers temp
-  messageText = game.add.text(500,100, '', {fontsize: '54px', fill: '#fffea7'} );
+  messageText = game.add.text(500,100, '', {fontsize: '30px', fill: '#fffea7'} );
   messageText.anchor.setTo(0.5, 0.5);
   messageText.fixedToCamera = true;
   messageText.visible = false;
@@ -344,7 +344,7 @@ if (powerUpActive === false){
   //BACKGROUND PARALLAX
   sky.tilePosition.x = game.camera.x * -0.2; //furthest = slowest
   mountains.tilePosition.x = game.camera.x * -0.3;
-  city.tilePosition.x = game.camera.x * -0.4;//closest = fastest
+  city.tilePosition.x = game.camera.x * -0.4; //closest = fastest
 
   // CHECK CAT ANIMATIONS
   //if the enemy's velocity is less than 0 this means it is moving left
@@ -381,6 +381,7 @@ function displayTimeLeft(){
   var timeLeft = timeLimit - time;
   // console.log(timeLeft);
   // timeLimit = timeLeft;
+  //
 
 if(timeLeft <= 0) {
     timeLeft = 0;
@@ -404,15 +405,40 @@ function collectCoin(player, coin) {
 }
 
 function checkWin (){
-  if(score >= 3900){
-    messageText.text = 'You proably cheated but... Good job you won!!';
+  if(score === 3900){
+    messageText.text = 'You proably cheated but... Good job you won!! You may travel as you please';
     messageText.fill = '#00ff00';
     messageText.visible = true;
-    player.exists = false;
+    messageText.fontSize = '20px';
+    // player.exists = false;
+
+    powerUpActive = true;
+  }
+  else if(score >= 4300) {
+    messageText.text = 'By clearing this area of the evil cats you have become a member of The Golden Cat Hunters congratulations';
+    messageText.fill = '#00ff00';
+    messageText.fontSize = '15px';
+    messageText.visible = true;
+    // player.exists = false;
+    powerUpActive = true;
+    player.tint = 0xf0ff0f;
+
   }
 }
 
 function collectPowerUp(player, powerUp){
+  if(score >= 4300) {
+    powerUp.kill();
+    messageText.text = 'By clearing this area of the evil cats you have become a member of The Golden Cat Hunters congratulations';
+    messageText.fill = '#00ff00';
+    messageText.fontSize = '15px';
+    messageText.visible = true;
+    // player.exists = false;
+    powerUpActive = true;
+    player.tint = 0xf0ff0f;
+    player.body.collideWorldBounds = true;
+  }
+else {
   powerUp.kill();
   powerUpActive = true;
   player.body.collideWorldBounds = true;
@@ -422,7 +448,7 @@ function collectPowerUp(player, powerUp){
   player.tint = 0x00ff00;
   lasers.tint = 0x00ff00;
   game.time.events.add(Phaser.Timer.SECOND * 10, stopPowerUp, this);
-
+}
 }
 
 function stopPowerUp(){
@@ -503,9 +529,30 @@ function laserHit(laser, enemy) {
 }
 
 function gameOver (){
+  if (score === 3900) {
+    messageText.text = "Developed by yours truly Emmanuel Casimir @AResilientDev";
+    messageText.fill = '#00ff00';
+    messageText.fontSize = '15px';
+    messageText.visible = true;
+    powerUpActive = true;
+    // player.exists = false;
+
+  }
+  else if (score >= 4300) {
+    messageText.text = "Attention soilder the world needs you the evil cats are growing in number and you are the only one who can stop them - To be Continued?...";
+    messageText.fill = '#00ff00';
+    messageText.fontSize = '15px';
+    messageText.visible = true;
+    powerUpActive = true;
+    player.tint = 0xf0ff0f;
+
+  }
+
+  else{
   messageText.text = "Times up thanks for playing & supporting a up & coming software developer - Developed by yours truly Emmanuel Casimir @AResilientDev ";
   messageText.fill = '#ff0000'
   messageText.fontSize = '15px'
   messageText.visible = true;
   player.exists = false;
+  }
 }
